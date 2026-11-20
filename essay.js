@@ -27,7 +27,8 @@ const LIGHT = { sky: '#fffaf0', fill: '#fff4ea', ground: '#efe4cf' };
 // ---------- three ----------
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+// 1.5x is still crisp on a Retina screen, at a little more than half the pixels of 2x (as in the game)
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -38,7 +39,7 @@ scene.add(new THREE.HemisphereLight(LIGHT.sky, LIGHT.ground, 1.85));
 const sun = new THREE.DirectionalLight('#fffaf2', 1.25);
 sun.position.set(2.5, 9, 4);
 sun.castShadow = true;
-sun.shadow.mapSize.set(1024, 1024);
+sun.shadow.mapSize.set(512, 512);
 Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 25 });
 sun.shadow.radius = 6;
 scene.add(sun);
@@ -305,10 +306,19 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clock = new THREE.Clock();
 const target = new THREE.Quaternion(), flat = new THREE.Quaternion();
 show(0);
-renderer.setAnimationLoop(() => {
-  const dt = Math.min(clock.getDelta(), .05), now = clock.elapsedTime;
+// Draw only when something moves, as the game does. While the box turns, is dragged, or opens for reading, every frame
+// is drawn (up to 60 a second). Left alone, it floats gently at 30 a second for a few seconds, the float settles,
+// and then nothing is drawn at all until the next touch or key, so the computer can rest.
+let awake = performance.now(), drawn = 0, floatT = 0, sway = 1;
+const wake = () => { awake = performance.now(); };
+for (const ev of ['pointerdown', 'pointermove', 'keydown', 'wheel', 'resize', 'focus']) addEventListener(ev, wake, { passive: true });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wake(); });
+const near = (a, b) => Math.abs(a - b) < .001;
+function frame(dt) {
   tilt += (tiltTo - tilt) * Math.min(1, dt * 6);
   zoom += (zoomTo - zoom) * Math.min(1, dt * 6);
+  if (near(tilt, tiltTo)) tilt = tiltTo;
+  if (near(zoom, zoomTo)) zoom = zoomTo;
   // where the box is headed: the side for this section, tilted by however far from reading we are
   flat.identity().slerp(TILT, tilt);
   target.copy(BASE[cur]).premultiply(flat);
@@ -317,12 +327,26 @@ renderer.setAnimationLoop(() => {
     turn.t = Math.min(1, turn.t + dt / (reduce ? .01 : turn.dur));
     box.quaternion.slerpQuaternions(turn.from, target, ease(turn.t));
   } else box.quaternion.copy(target);
-  // a slow float while it waits
-  const still = reduce ? 0 : 1 - zoom;
-  float.position.y = Math.sin(now * .9) * .08 * still + .25 * (1 - zoom);
-  float.rotation.y = Math.sin(now * .45) * .03 * (drag && drag.moved ? 0 : still);
+  // a slow float while it waits, fading away after a few quiet seconds
+  floatT += dt;
+  const quiet = performance.now() - awake, swayTo = reduce || reading || (drag && drag.moved) || quiet > 5000 ? 0 : 1;
+  sway += (swayTo - sway) * Math.min(1, dt * 2); if (near(sway, swayTo)) sway = swayTo;
+  const still = sway * (1 - zoom);
+  float.position.y = Math.sin(floatT * .9) * .08 * still + .25 * (1 - zoom);
+  float.rotation.y = Math.sin(floatT * .45) * .03 * still;
   // drawing near to read: the box comes forward and sits behind the card
   camera.position.set(0, dist * .3 * (1 - zoom), dist * (1 - zoom * .22));
   camera.lookAt(0, .15 * (1 - zoom), 0);
   renderer.render(scene, camera);
-});
+}
+function loop(now) {
+  requestAnimationFrame(loop);
+  const busy = (drag && drag.moved) || turn.t < 1 || tilt !== tiltTo || zoom !== zoomTo;
+  const floating = sway > 0 || performance.now() - awake < 5000;
+  if (!busy && !floating && drawn) { clock.getDelta(); return; }          // asleep: nothing is moving
+  if (now - drawn < (busy ? 1000 / 62 : 1000 / 31)) return;
+  drawn = now;
+  frame(Math.min(clock.getDelta(), .05));
+}
+addEventListener('resize', () => { drawn = 0; });                          // a new size is always drawn
+requestAnimationFrame(loop);
