@@ -1,0 +1,95 @@
+/* The essay on the box: the paper and ink of Pandora's Box (see the game's css/style.css), a cream box, in the backdrop of the
+   portfolio (Portfolio/css/base.css, --sky at midday): light into water, pale green at the top to teal at the foot. */
+:root {
+  --ink: #24232a;
+  --ink-2: #57534d;
+  --line: rgba(36, 35, 42, .16);
+  --paper: #fffaf0;
+  --orange: #ff9636;
+  --room: linear-gradient(180deg, #e6f0d8 0%, #d2eace 20%, #b8e5cd 40%, #9fe0d0 60%, #88d8d2 80%, #74cdd2 100%);
+  --on-room: var(--ink);   /* type over the room, below the box */
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --gutter: clamp(1rem, 4.5vw, 4.5rem);
+  --fold: 22px;
+  --ease: cubic-bezier(.65, 0, .35, 1);
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; font-family: var(--font-sans); color: var(--ink); font-feature-settings: "ss01", "cv11"; -webkit-font-smoothing: antialiased; }
+body { background: #9fe0d0; background: var(--room); background-attachment: fixed; }
+#c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; touch-action: none; }
+button { font: inherit; color: inherit; background: none; border: 0; border-radius: 0; cursor: pointer; padding: 0; }
+button:focus-visible { outline: 1.5px solid currentColor; outline-offset: 4px; }
+.hidden { opacity: 0; visibility: hidden; pointer-events: none !important; }
+
+.kicker, .ic { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; line-height: 1.4; }
+
+/* ---------- which side is facing you ---------- */
+.where { position: fixed; left: 0; right: 0; bottom: max(1.25rem, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: .45rem; padding: 0 var(--gutter); text-align: center; pointer-events: none; transition: opacity .5s var(--ease); }
+.where { color: var(--on-room); }
+.where .kicker { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.where .name { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -.01em; }
+.where .hint { margin-top: .35rem; opacity: .75; }
+.dots { display: flex; gap: 8px; margin: .2rem 0 0; padding: 0; list-style: none; }
+.dots li { width: 6px; height: 6px; border: 1px solid var(--ink-2); transition: background .4s var(--ease-out), transform .4s var(--ease-out); }
+.dots li.on { background: var(--ink); border-color: var(--ink); transform: rotate(45deg); }
+
+/* ---------- arrows ---------- */
+.arrow { position: fixed; top: 50%; z-index: 4; width: 52px; height: 52px; margin-top: -26px; display: grid; place-items: center; color: var(--ink); transition: opacity .4s var(--ease), visibility .4s; }
+.arrow.prev { left: max(.25rem, calc(var(--gutter) - 14px)); }
+.arrow.next { right: max(.25rem, calc(var(--gutter) - 14px)); }
+.arrow svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; transition: transform .3s var(--ease-out); }
+.arrow.prev:hover svg, .arrow.prev:focus-visible svg { transform: translateX(-3px); }
+.arrow.next:hover svg, .arrow.next:focus-visible svg { transform: translateX(3px); }
+/* a small nudge now and then, so it reads as "there is more this way" */
+.arrow.next.nudge svg { animation: nudge-r 3.2s var(--ease) infinite; }
+.arrow.prev.nudge svg { animation: nudge-l 3.2s var(--ease) infinite; }
+@keyframes nudge-r { 0%, 70%, 100% { transform: none; } 80% { transform: translateX(5px); } 90% { transform: translateX(0); } }
+@keyframes nudge-l { 0%, 70%, 100% { transform: none; } 80% { transform: translateX(-5px); } 90% { transform: translateX(0); } }
+.arrow[disabled] { opacity: 0; visibility: hidden; }
+/* while reading, the arrows sit over the veil and still move between sides */
+body.reading .arrow { color: var(--ink); }
+body.reading .where { opacity: 0; }
+
+/* ---------- reader: the side, set flat in the middle ---------- */
+.reader { position: fixed; inset: 0; z-index: 3; display: grid; place-items: center; padding: max(1rem, env(safe-area-inset-top)) calc(var(--gutter) + 44px) max(1rem, env(safe-area-inset-bottom)); background: rgba(20, 60, 64, .2); transition: opacity .45s var(--ease), visibility .45s; }
+.card { position: relative; width: min(620px, 100%); max-height: min(86vh, 100%); overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(36,35,42,.25) transparent; padding: 2.5rem 2.5rem 2.25rem; background: var(--paper); color: var(--ink);
+  clip-path: polygon(0 0, calc(100% - var(--fold)) 0, 100% var(--fold), 100% 100%, 0 100%);
+  box-shadow: inset 0 -3px 0 var(--orange);
+  transform-origin: 50% 50%; transition: transform .55s var(--ease-out), opacity .45s var(--ease-out); }
+.reader.hidden .card { transform: scale(.86) translateY(14px); opacity: 0; }
+.card:focus { outline: none; }
+.card .close { position: absolute; top: 1rem; right: 2rem; }
+.card .kicker { color: var(--ink-2); }
+.card h2 { margin: .5rem 0 1.4rem; font-size: clamp(1.75rem, 1.2rem + 2vw, 2.6rem); font-weight: 500; line-height: 1.02; letter-spacing: -.035em; padding-right: 3rem; }
+.card .body p { margin: 0 0 1.1em; font-size: 17px; line-height: 1.55; max-width: 38em; }
+.card .body p:last-child { margin-bottom: 0; }
+.card .empty { color: var(--ink-2); font-style: italic; }
+.card .sources { margin: 0; padding-left: 1.2em; }
+.card .sources li { margin: 0 0 .8em; font-size: 15px; line-height: 1.55; }
+.ic { position: relative; padding: .5rem 0; color: var(--ink-2); }
+.ic:hover, .ic:focus-visible { color: var(--ink); }
+.ic::after { content: ''; position: absolute; left: 0; right: 0; bottom: .3rem; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .4s var(--ease-out); }
+.ic:hover::after, .ic:focus-visible::after { transform: scaleX(1); }
+
+@media (max-width: 560px) {
+  .reader { padding-left: .75rem; padding-right: .75rem; align-items: center; }
+  .card { padding: 2rem 1.35rem 1.75rem; max-height: 82vh; }
+  .card .close { right: 1.5rem; }
+  .card .body p { font-size: 16px; }
+  /* on a phone the arrows sit low beside the card, clear of the text */
+  body.reading .arrow { top: auto; bottom: max(.5rem, env(safe-area-inset-bottom)); margin-top: 0; }
+  body.reading .arrow.prev { left: 50%; margin-left: -60px; }
+  body.reading .arrow.next { right: 50%; margin-right: -60px; }
+  body.reading .card { max-height: calc(100vh - 6.5rem); margin-bottom: 3rem; }
+}
+/* ---------- the cursor, as in Pandora's Box (fine pointers only): a small dot of ink that opens into a ring over
+   anything that can be clicked ---------- */
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+#cursor { --c: var(--ink); position: fixed; top: 0; left: 0; z-index: 200; pointer-events: none; opacity: 0; transition: opacity .2s; }
+#cursor.on { opacity: 1; }
+#cursor::before { content: ""; position: absolute; width: 6px; height: 6px; margin: -3px; border: 1px solid var(--c); border-radius: 50%; background: var(--c);
+  transition: width .35s var(--ease-out), height .35s var(--ease-out), margin .35s var(--ease-out), background-color .25s, border-color .25s; }
+#cursor.ring::before { width: 34px; height: 34px; margin: -17px; background: transparent; }
+
+@media (prefers-reduced-motion: reduce) { .arrow svg { animation: none !important; } }

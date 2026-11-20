@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Advocacy Project</title>
+<link rel="icon" href="favicon.png">
+<meta name="theme-color" content="#e6f0d8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="essay.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+</head>
+<body>
+<canvas id="c" aria-label="The box. Each side holds one section of the essay. Tap the box to read the side facing you."></canvas>
+
+<!-- which side is facing you -->
+<footer class="where" aria-live="polite">
+  <p id="wNum" class="kicker"></p>
+  <p id="wName" class="name"></p>
+  <ol id="dots" class="dots" aria-hidden="true"></ol>
+  <p class="kicker hint">Tap the box to read · Drag to turn it</p>
+</footer>
+
+<!-- arrows to the next and previous sides -->
+<button id="prev" class="arrow prev nudge" disabled aria-label="Previous section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8"/></svg></button>
+<button id="next" class="arrow next nudge" aria-label="Next section"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4l8 8-8 8"/></svg></button>
+
+<!-- the side you tapped, set flat in the middle of the screen for reading -->
+<div id="reader" class="reader hidden" role="dialog" aria-modal="true" aria-labelledby="rTitle">
+  <article class="card" id="card" tabindex="-1">
+    <button id="rClose" class="ic close" aria-label="Close">Close</button>
+    <p id="rNum" class="kicker"></p>
+    <h2 id="rTitle"></h2>
+    <div id="rBody" class="body"></div>
+  </article>
+</div>
+
+<script type="module" src="essay.js"></script>
+
+<!-- the cursor, as in the game: a small dot that opens into a ring over anything that can be clicked -->
+<div id="cursor" aria-hidden="true"></div>
+</body>
+</html>
