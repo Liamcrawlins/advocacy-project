@@ -75,6 +75,28 @@ function cut(x, size, color, draw) {
   x.save(); x.translate(0, off); x.globalAlpha = .8; x.fillStyle = x.strokeStyle = '#ffffff'; draw(); x.restore();
   x.save(); x.globalCompositeOperation = 'multiply'; x.fillStyle = x.strokeStyle = color; draw(); x.restore();
 }
+const WORDS = ['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+// The page number, on a white note card like the label each layer has in Pandora's Box (css/style.css, .gate-label):
+// clear white paper, its top right corner cut as a fold, a soft shadow under it, a small tracked label above the
+// page, written out as a word.
+const CARD = { w: 360, h: 236, fold: 46 };
+function pageCard(x, i, left, top) {
+  const { w, h, fold } = CARD;
+  const shape = () => { x.beginPath(); x.moveTo(left, top); x.lineTo(left + w - fold, top); x.lineTo(left + w, top + fold); x.lineTo(left + w, top + h); x.lineTo(left, top + h); x.closePath(); };
+  x.save();
+  x.shadowColor = 'rgba(20, 60, 64, .3)'; x.shadowBlur = 34; x.shadowOffsetY = 14;
+  x.fillStyle = '#ffffff'; shape(); x.fill();
+  x.restore();
+  x.fillStyle = '#57534d'; type(x, 500, 30, .14);
+  x.fillText('PAGE', left + 40, top + 66);
+  // the word as large as the card allows, up to 88px
+  let size = 88; type(x, 500, size, -.03);
+  const room = w - 80, wide = x.measureText(WORDS[i]).width;
+  if (wide > room) { size = Math.floor(size * room / wide); type(x, 500, size, -.03); }
+  x.fillStyle = '#24232a';
+  x.fillText(WORDS[i], left + 38, top + 66 + 112);
+  x.letterSpacing = '0px';
+}
 const type = (x, weight, size, track = 0, style = '') => { x.font = `${style} ${weight} ${size}px Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif`; x.letterSpacing = track * size + 'px'; };
 function drawSide(i) {
   const s = sections[i], cv = document.createElement('canvas'); cv.width = cv.height = TEX;
@@ -84,12 +106,12 @@ function drawSide(i) {
   // a fine carved frame set in from the edge, so the text sits in a panel of the stone
   const F = 92;
   cut(x, 60, 'rgba(60,52,44,.28)', () => { x.lineWidth = 3; x.strokeRect(F, F, TEX - 2 * F, TEX - 2 * F); });
-  // the label
-  type(x, 500, 34, .14);
-  cut(x, 34, CUT_INK2, () => x.fillText(label(i).toUpperCase(), PAD, PAD + 34));
-  // the heading
+  // the page number, on its note card in the top right corner
+  const cardLeft = TEX - F - 56 - CARD.w, cardTop = F + 56;
+  pageCard(x, i, cardLeft, cardTop);
+  // the heading, kept clear of the card
   const HS = 112; type(x, 500, HS, -.035);
-  const head = wrap(x, s.title, W); let y = PAD + 34 + 70 + HS * .78;
+  const head = wrap(x, s.title, cardLeft - 60 - PAD); let y = PAD + 30 + HS * .78;
   head.forEach(l => { const yy = y; cut(x, HS, CUT_INK, () => x.fillText(l, PAD, yy)); y += HS * 1.02; });
   // a short carved rule under it
   y += 18;
